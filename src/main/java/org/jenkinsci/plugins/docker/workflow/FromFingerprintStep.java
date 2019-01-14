@@ -94,26 +94,6 @@ public class FromFingerprintStep extends AbstractStepImpl {
         @StepContextParameter private transient Node node;
 
         @Override protected Void run() throws Exception {
-            FilePath dockerfilePath = workspace.child(step.dockerfile);
-            Dockerfile dockerfile = new Dockerfile(dockerfilePath);
-            Map<String, String> buildArgs = DockerUtils.parseBuildArgs(dockerfile, step.commandLine);
-            String fromImage = dockerfile.getFroms().getLast();
-
-            if (dockerfile.getFroms().isEmpty()) {
-                throw new AbortException("could not find FROM instruction in " + dockerfilePath);
-            }
-            if (buildArgs != null) {
-                // Fortunately, Docker uses the same EnvVar syntax as Jenkins :)
-                fromImage = Util.replaceMacro(fromImage, buildArgs);
-            }
-            DockerClient client = new DockerClient(launcher, node, step.toolName);
-            String descendantImageId = client.inspectRequiredField(env, step.image, FIELD_ID);
-            if (fromImage.equals("scratch")) { // we just made a base image
-                DockerFingerprints.addFromFacet(null, descendantImageId, run);
-            } else {
-                DockerFingerprints.addFromFacet(client.inspectRequiredField(env, fromImage, FIELD_ID), descendantImageId, run);
-                ImageAction.add(fromImage, run);
-            }
             return null;
         }
 
